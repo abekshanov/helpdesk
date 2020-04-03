@@ -21,19 +21,20 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-        $order = $request->all();
-        OrderService::create($order);
+        OrderService::create($request);
         return redirect()->route('orders.index');
     }
 
     public function show($orderId)
     {
-        $orders = OrderService::getById($orderId);
-        return view('orders.show', compact('orders'));
+        $order = OrderService::getById((Int)$orderId);
+        return view('orders.show', compact('order'));
     }
 
-    public function answer()
+    public function close($orderId, $status)
     {
-
+        $order['status'] = $status;
+        OrderService::update($orderId, $order);
+        return redirect()->route('orders.index');
     }
 }

@@ -2,6 +2,8 @@
 
 @section('content')
 <div class="container">
-    @include('orders.form');
+    <p><b>Создать заявку:</b></p>
+
+    @include('orders.form', ['parentId' => 0, 'status' => config('helpdesk.default.status')])
 </div>
 @endsection
