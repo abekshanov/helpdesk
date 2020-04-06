@@ -10,6 +10,7 @@ return [
         'open' => 'open',
         'closed' => 'closed',
         'answer' => 'answer',
+        'accepted' => 'accepted',
     ]
 
 ];

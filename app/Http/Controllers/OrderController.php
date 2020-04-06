@@ -25,13 +25,14 @@ class OrderController extends Controller
         return redirect()->route('orders.index');
     }
 
-    public function show($orderId)
+    public function show(Int $orderId)
     {
-        $order = OrderService::getById((Int)$orderId);
-        return view('orders.show', compact('order'));
+        $order = OrderService::getById($orderId);
+        $answers = OrderService::getOrderAnswers($orderId);
+        return view('orders.show', compact('order', 'answers'));
     }
 
-    public function close($orderId, $status)
+    public function update($orderId, $status)
     {
         $order['status'] = $status;
         OrderService::update($orderId, $order);

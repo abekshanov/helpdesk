@@ -15,4 +15,9 @@ class Order extends Model
         'assignee_id',
         'parent_id',
     ];
+
+    public function users()
+    {
+        return $this->belongsToMany('App\User')->withTimestamps();
+    }
 }

@@ -21,7 +21,7 @@ Route::get('/home', 'HomeController@index')->name('home');
 
 Route::get('/orders', 'OrderController@index')->name('orders.index');
 Route::get('/orders/show/{id}', 'OrderController@show')->name('orders.show');
-Route::get('/orders/close/{id}/{status}', 'OrderController@close')->name('orders.close');
+Route::get('/orders/close/{id}/{status}', 'OrderController@update')->name('orders.close');
 Route::get('/orders/create', function (){
     return view('orders.create');
 })->name('orders.create');
