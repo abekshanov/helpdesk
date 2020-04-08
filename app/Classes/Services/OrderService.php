@@ -4,6 +4,7 @@
 namespace App\Classes\Services;
 
 
+use App\Classes\Filters\OrderFilter;
 use App\Order;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -11,14 +12,17 @@ use Illuminate\Support\Facades\Auth;
 
 class OrderService
 {
-    public static function getAll(): Collection
+    public static function getAll(Request $request): Collection
     {
-        $user = Auth::user();
-        $orders = Order::where('parent_id', 0)->get();
+//        $user = Auth::user();
+        $user = $request->user();
+        $orders = Order::with('users')->where('parent_id', 0);
 
-        if ($user->cannot('viewAll', $orders)) {
-            return $orders->where('author_id', Auth::id());
-        }
+//        if ($user->cannot('viewAny', $orders)) {
+//            return $orders->where('author_id', Auth::id());
+//        }
+
+        $orders = (new OrderFilter($orders, $request))->apply()->get();
 
         return $orders;
     }
@@ -40,11 +44,7 @@ class OrderService
     {
         $order = $request->all();
         $order['file_link'] = self::uploadFile($request);
-        $user = $request->user();
-
-        if ($user->can('create', $order)) {
-            Order::create($order);
-        }
+        Order::create($order);
     }
 
     public static function update(Int $orderId, Array $data): Void
@@ -54,6 +54,7 @@ class OrderService
 
     public static function setViewedStatus(Int $orderId): Void
     {
+        // если есть запись в связанной таблице, значит заявка была просмотрена
         $userId = Auth::id();
         $user = Auth::user();
         if ($user->hasRole('manager')) {

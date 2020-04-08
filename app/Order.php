@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Classes\Filters\OrderScope;
 use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
@@ -20,4 +21,5 @@ class Order extends Model
     {
         return $this->belongsToMany('App\User')->withTimestamps();
     }
+
 }

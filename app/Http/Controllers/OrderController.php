@@ -13,9 +13,9 @@ class OrderController extends Controller
         $this->middleware('auth');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $orders = OrderService::getAll();
+        $orders = OrderService::getAll($request);
         return view('orders.index', compact('orders'));
     }
 

@@ -45,6 +45,25 @@ class OrderPolicy
     }
 
     /**
+     * Determine whether the user can answer on orders.
+     *
+     * @param  \App\User  $user
+     * @return mixed
+     */
+    public function answer(User $user, Order $order)
+    {
+        // если текущий пользователь - клиент и заявка не закрыта, то он может ответить
+        if ($user->hasRole('client') && ($order->status == config('helpdesk.status.open'))) {
+            return true;
+        }
+        // если текущий пользователь - менеджер и заявка назначена на него, то он может ответить
+        if ($user->hasRole('manager') && ($order->assignee_id == $user->id)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Determine whether the user can update the order.
      *
      * @param  \App\User  $user
@@ -57,39 +76,15 @@ class OrderPolicy
     }
 
     /**
-     * Determine whether the user can delete the order.
+     * Determine whether the user can close the order.
      *
      * @param  \App\User  $user
      * @param  \App\Order  $order
      * @return mixed
      */
-    public function delete(User $user, Order $order)
+    public function close(User $user, Order $order)
     {
-        //
-    }
-
-    /**
-     * Determine whether the user can restore the order.
-     *
-     * @param  \App\User  $user
-     * @param  \App\Order  $order
-     * @return mixed
-     */
-    public function restore(User $user, Order $order)
-    {
-        //
-    }
-
-    /**
-     * Determine whether the user can permanently delete the order.
-     *
-     * @param  \App\User  $user
-     * @param  \App\Order  $order
-     * @return mixed
-     */
-    public function forceDelete(User $user, Order $order)
-    {
-        //
+        return $user->hasRole('client');
     }
 
 

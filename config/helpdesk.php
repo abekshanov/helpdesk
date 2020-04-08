@@ -4,13 +4,17 @@ return [
 
     'default' => [
         'status' => 'open',
+        'client' => 'client',
     ],
 
     'status' => [
         'open' => 'open',
         'closed' => 'closed',
         'answer' => 'answer',
-        'accepted' => 'accepted',
-    ]
+    ],
 
+    'roles' => [
+        'client' => 'client',
+        'manager' => 'manager',
+    ],
 ];
