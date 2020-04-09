@@ -1,8 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-
     <p><b>Номер заявки: </b> {{$order->id}}</p>
     <p><b>Тема:</b> {{$order->title}}</p>
     <p><b>Сообщение: </b>{{$order->description}}</p>
@@ -15,7 +13,16 @@
             Отсутствует
         @endif
     </p>
-    <p><b>Назначена: </b>{{$order->assignee}}</p>
+    <p>
+        <b>Назначена: </b>
+        @if ($order->assignee_id)
+            {{$order->users()->find($order->assignee_id)->name}}
+        @else
+            Нет исполнителя
+        @endif
+        <a href="{{route('orders.accept', ['id' => $order->id, 'user_id' => Auth::id()])}}" type="button"
+           class="btn btn-success ml-2">Принять на выполнение</a>
+    </p>
     <p>
         <b>Статус: </b>{{$order->status}}
         <a href="{{route('orders.close', ['id' => $order->id, 'status' => config('helpdesk.status.closed')])}}" type="button"
@@ -43,5 +50,4 @@
 
     <p><b>Ответить на заявку:</b></p>
     @include('orders.form', ['parentId' => $order->id, 'status' => config('helpdesk.status.answer')])
-</div>
 @endsection

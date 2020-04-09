@@ -80,7 +80,22 @@
         </nav>
 
         <main class="py-4">
-            @yield('content')
+            <div class="container">
+
+                @if (session('systemMessage'))
+                    <div class="alert alert-success" role="alert">
+                        {{ session('systemMessage') }}
+                    </div>
+                @elseif (session('errors'))
+                    <ul class="alert alert-danger" role="alert">
+                        @foreach(session('errors')->all() as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+
+                @yield('content')
+            </div>
         </main>
     </div>
 </body>

@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
     <a type="button" href="{{route('orders.create')}}" class="btn btn-outline-primary">Создать</a>
 
     <p class="mt-5">Фильтр</p>
@@ -64,5 +63,4 @@
         @endforeach
         </tbody>
     </table>
-</div>
 @endsection

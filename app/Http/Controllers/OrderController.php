@@ -22,20 +22,26 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         OrderService::create($request);
-        return redirect()->route('orders.index');
+        return redirect()->route('orders.index')->with('systemMessage', 'Данные по заявке сохранены');
     }
 
     public function show(Int $orderId)
     {
         $order = OrderService::getById($orderId);
         $answers = OrderService::getOrderAnswers($orderId);
+        OrderService::setViewedStatus($orderId);
         return view('orders.show', compact('order', 'answers'));
     }
 
-    public function update($orderId, $status)
+    public function close($orderId, $status)
     {
-        $order['status'] = $status;
-        OrderService::update($orderId, $order);
-        return redirect()->route('orders.index');
+        OrderService::setClosedStatus($orderId, $status);
+        return redirect()->route('orders.index')->with('systemMessage', 'Заявка закрыта');
+    }
+
+    public function accept($orderId, $userId)
+    {
+        OrderService::assignToManager($orderId, $userId);
+        return redirect()->route('orders.index')->with('systemMessage', 'Заявка принята в работу');
     }
 }

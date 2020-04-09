@@ -5,6 +5,7 @@ namespace App\Classes\Services;
 
 
 use App\Classes\Filters\OrderFilter;
+use App\Exceptions\LogicException;
 use App\Order;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -29,7 +30,6 @@ class OrderService
 
     public static function getById(Int $orderId): Order
     {
-        self::setViewedStatus($orderId);
         $order = Order::findOrFail($orderId);
         return $order;
     }
@@ -44,12 +44,66 @@ class OrderService
     {
         $order = $request->all();
         $order['file_link'] = self::uploadFile($request);
-        Order::create($order);
+        $newOrder = Order::create($order);
+
+        if ($order['parent_id'] == 0) {
+            // если создана новая заявка
+            if (UserService::isClient($order['author_id'])) {
+                // создана клиентом
+                MailService::sendToManagersCreatedOrder($newOrder);
+            }
+        } else {
+            // если создан ответ к существующей заявке
+
+            if (UserService::isClient($order['author_id'])) {
+                // если ответ на заявку создан клиентом
+                MailService::sendToManagerAnswer($newOrder);
+            }elseif (UserService::isManager($order['author_id'])){
+                // если ответ на заявку создан менеджером
+                MailService::sendEmailToClientAnswer($newOrder);
+            }
+        }
     }
 
-    public static function update(Int $orderId, Array $data): Void
+    public static function update(Int $orderId, Array $data): Order
     {
-        Order::find($orderId)->update($data);
+        $order = Order::find($orderId);
+        $order->update($data);
+        return $order;
+    }
+
+    public static function assignToManager(Int $orderId, Int $userId): Void
+    {
+        if (self::getById($orderId)->assignee_id) {
+            throw new LogicException('Невозможно выполнить. Заявка уже назначена.');
+        }
+        if (UserService::isManager($userId)) {
+            $data['assignee_id'] = $userId;
+            self::update($orderId, $data);
+        } else {
+            throw new LogicException('У вас нет прав');
+        }
+    }
+
+    public static function setClosedStatus(Int $orderId, String $status): Void
+    {
+        if (self::isOpen($orderId)) {
+            // если заявка открыта, то меняет статус заявки на "closed"
+            $data['status'] = $status;
+            $order = self::update($orderId, $data);
+            if (UserService::isClient($order['author_id'])) {
+                // если заявку закрывает клиент
+                MailService::sendToManagerClosedOrder($order);
+            }
+        }
+    }
+
+    public static function isOpen(Int $orderId): Bool
+    {
+        if (self::getById($orderId)->status != config('helpdesk.status.closed')) {
+            return true;
+        }
+        return false;
     }
 
     public static function setViewedStatus(Int $orderId): Void
@@ -92,5 +146,7 @@ class OrderService
 
         return null;
     }
+
+
 
 }
