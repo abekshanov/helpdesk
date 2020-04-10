@@ -41,7 +41,7 @@ class OrderController extends Controller
 
     public function accept($orderId, $userId)
     {
-        OrderService::assignToManager($orderId, $userId);
+        OrderService::accept($orderId, $userId);
         return redirect()->route('orders.index')->with('systemMessage', 'Заявка принята в работу');
     }
 }

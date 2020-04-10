@@ -4,7 +4,7 @@ return [
 
     'default' => [
         'status' => 'open',
-        'client' => 'client',
+        'role' => 'client',
     ],
 
     'status' => [

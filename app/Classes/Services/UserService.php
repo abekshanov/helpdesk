@@ -4,6 +4,7 @@
 namespace App\Classes\Services;
 
 
+use App\Role;
 use App\User;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -35,6 +36,12 @@ class UserService
             return true;
         }
         return false;
+    }
+
+    public static function assignDefaultRole(User $user): Void
+    {
+        $roleId = Role::where('name', config('helpdesk.default.role'))->first()->id;
+        $user->roles()->attach($roleId);
     }
 
 }

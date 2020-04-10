@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Classes\Services\OrderService;
 use App\Order;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -18,19 +19,18 @@ class OrderPolicy
      */
     public function viewAny(User $user)
     {
-        return $user->hasRole('manager');
+        return $user->hasRole(config('helpdesk.roles.manager'));
     }
 
     /**
-     * Determine whether the user can view the order.
+     * Determine whether the user can filter any orders.
      *
      * @param  \App\User  $user
-     * @param  \App\Order  $order
      * @return mixed
      */
-    public function view(User $user, Order $order)
+    public function filter(User $user)
     {
-        //
+        return $user->hasRole(config('helpdesk.roles.manager'));
     }
 
     /**
@@ -41,38 +41,33 @@ class OrderPolicy
      */
     public function create(User $user)
     {
-        return $user->hasRole('client');
+        return $user->hasRole(config('helpdesk.roles.client'));
     }
 
     /**
-     * Determine whether the user can answer on orders.
+     * Determine whether the user can create orders.
      *
      * @param  \App\User  $user
      * @return mixed
      */
     public function answer(User $user, Order $order)
     {
-        // если текущий пользователь - клиент и заявка не закрыта, то он может ответить
-        if ($user->hasRole('client') && ($order->status == config('helpdesk.status.open'))) {
-            return true;
+        if (!OrderService::isOpen($order->id)) {
+            return false;
         }
-        // если текущий пользователь - менеджер и заявка назначена на него, то он может ответить
-        if ($user->hasRole('manager') && ($order->assignee_id == $user->id)) {
-            return true;
-        }
-        return false;
+        return true;
     }
 
     /**
-     * Determine whether the user can update the order.
+     * Determine whether the user can accept the order.
      *
      * @param  \App\User  $user
      * @param  \App\Order  $order
      * @return mixed
      */
-    public function update(User $user, Order $order)
+    public function accept(User $user)
     {
-        return $user->hasAnyRoles(['manager', 'client']);
+        return $user->hasRole(config('helpdesk.roles.manager'));
     }
 
     /**
@@ -82,9 +77,9 @@ class OrderPolicy
      * @param  \App\Order  $order
      * @return mixed
      */
-    public function close(User $user, Order $order)
+    public function close(User $user)
     {
-        return $user->hasRole('client');
+        return $user->hasRole(config('helpdesk.roles.client'));
     }
 
 

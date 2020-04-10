@@ -7,21 +7,22 @@ namespace App\Classes\Services;
 use App\Classes\Filters\OrderFilter;
 use App\Exceptions\LogicException;
 use App\Order;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class OrderService
 {
     public static function getAll(Request $request): Collection
     {
-//        $user = Auth::user();
         $user = $request->user();
         $orders = Order::with('users')->where('parent_id', 0);
 
-//        if ($user->cannot('viewAny', $orders)) {
-//            return $orders->where('author_id', Auth::id());
-//        }
+        if ($user->cannot('viewAny', Order::class)) {
+            return $orders->where('author_id', $user->id)->get();
+        }
 
         $orders = (new OrderFilter($orders, $request))->apply()->get();
 
@@ -44,25 +45,44 @@ class OrderService
     {
         $order = $request->all();
         $order['file_link'] = self::uploadFile($request);
-        $newOrder = Order::create($order);
+
 
         if ($order['parent_id'] == 0) {
-            // если создана новая заявка
-            if (UserService::isClient($order['author_id'])) {
-                // создана клиентом
-                MailService::sendToManagersCreatedOrder($newOrder);
+            // если создается новая заявка
+            if (self::timeFromLastOrderByUserId($request->user()->id)<1) {
+                throw new LogicException('Вы не можете создавать заявки более одного раза в сутки');
             }
+            self::createNewOrder($order);
         } else {
-            // если создан ответ к существующей заявке
+            // если создается ответ к существующей заявке
+            self::createAnswer($order);
 
-            if (UserService::isClient($order['author_id'])) {
-                // если ответ на заявку создан клиентом
-                MailService::sendToManagerAnswer($newOrder);
-            }elseif (UserService::isManager($order['author_id'])){
-                // если ответ на заявку создан менеджером
-                MailService::sendEmailToClientAnswer($newOrder);
-            }
         }
+    }
+
+    protected static function createNewOrder(Array $order): Void
+    {
+        $user = UserService::getUserById($order['author_id']);
+        if ($user->cannot('create', Order::class)) {
+            throw new LogicException('У вас нет прав');
+        }
+        $newOrder = Order::create($order);
+        MailService::sendToManagersCreatedOrder($newOrder);
+
+    }
+
+    protected static function createAnswer(Array $order): Void
+    {
+        $newAnswer = Order::create($order);
+
+        if (UserService::isClient($order['author_id'])) {
+            // если ответ на заявку создан клиентом
+            MailService::sendToManagerAnswer($newAnswer);
+        }elseif (UserService::isManager($order['author_id'])){
+            // если ответ на заявку создан менеджером
+            MailService::sendToClientAnswer($newAnswer);
+        }
+
     }
 
     public static function update(Int $orderId, Array $data): Order
@@ -72,29 +92,30 @@ class OrderService
         return $order;
     }
 
-    public static function assignToManager(Int $orderId, Int $userId): Void
+    public static function accept(Int $orderId, Int $userId): Void
     {
         if (self::getById($orderId)->assignee_id) {
             throw new LogicException('Невозможно выполнить. Заявка уже назначена.');
         }
-        if (UserService::isManager($userId)) {
-            $data['assignee_id'] = $userId;
-            self::update($orderId, $data);
-        } else {
+
+        if (UserService::getUserById($userId)->cannot('accept', Order::class)) {
             throw new LogicException('У вас нет прав');
         }
+
+        $data['assignee_id'] = $userId;
+        self::update($orderId, $data);
     }
 
     public static function setClosedStatus(Int $orderId, String $status): Void
     {
+        if (Gate::denies('close', Order::class)) {
+            throw new LogicException('У вас нет прав');
+        }
         if (self::isOpen($orderId)) {
             // если заявка открыта, то меняет статус заявки на "closed"
             $data['status'] = $status;
             $order = self::update($orderId, $data);
-            if (UserService::isClient($order['author_id'])) {
-                // если заявку закрывает клиент
-                MailService::sendToManagerClosedOrder($order);
-            }
+            MailService::sendToManagerClosedOrder($order);
         }
     }
 
@@ -121,17 +142,6 @@ class OrderService
         }
     }
 
-    public static function getViewedStatus(Int $orderId): Bool
-    {
-        $userId = Auth::id();
-        $order = Order::find($orderId);
-        $count = $order->users()->find($userId)->count();
-        if($count) {
-            return true;
-        }
-        return false;
-    }
-
     public static function uploadFile(Request $request): ?String
     {
         if ($request->hasFile('customFile')) {
@@ -147,6 +157,14 @@ class OrderService
         return null;
     }
 
-
+    protected static function timeFromLastOrderByUserId(Int $userId): Int
+    {
+        $latestOrder = Order::where('author_id', $userId)->latest()->first();
+        if (!$latestOrder) {
+            return 1;
+        }
+        $date = Carbon::now();
+        return $date->diffInDays($latestOrder->created_at, false);
+    }
 
 }

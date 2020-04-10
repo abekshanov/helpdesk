@@ -40,7 +40,7 @@ class MailService
         }
     }
 
-    public static function sendEmailToClientAnswer(Order $order): Void
+    public static function sendToClientAnswer(Order $order): Void
     {
         $parentOrder = OrderService::getById($order->parent_id);
         $client = UserService::getUserById($parentOrder->author_id);

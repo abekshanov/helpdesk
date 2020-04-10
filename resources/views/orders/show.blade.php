@@ -20,13 +20,17 @@
         @else
             Нет исполнителя
         @endif
-        <a href="{{route('orders.accept', ['id' => $order->id, 'user_id' => Auth::id()])}}" type="button"
-           class="btn btn-success ml-2">Принять на выполнение</a>
+        @can('accept', \App\Order::class)
+            <a href="{{route('orders.accept', ['id' => $order->id, 'user_id' => Auth::id()])}}" type="button"
+               class="btn btn-success ml-2">Принять на выполнение</a>
+        @endcan
     </p>
     <p>
         <b>Статус: </b>{{$order->status}}
-        <a href="{{route('orders.close', ['id' => $order->id, 'status' => config('helpdesk.status.closed')])}}" type="button"
-           class="btn btn-outline-success ml-2">Закрыть заявку</a>
+       @can('close', \App\Order::class)
+            <a href="{{route('orders.close', ['id' => $order->id, 'status' => config('helpdesk.status.closed')])}}" type="button"
+               class="btn btn-outline-success ml-2">Закрыть заявку</a>
+        @endcan
     </p>
 
     <div>
@@ -47,7 +51,10 @@
             @endforeach
         @endif
     </div>
-
-    <p><b>Ответить на заявку:</b></p>
-    @include('orders.form', ['parentId' => $order->id, 'status' => config('helpdesk.status.answer')])
+    @can('answer', $order)
+        <p><b>Ответить на заявку:</b></p>
+        @include('orders.form', ['parentId' => $order->id, 'status' => config('helpdesk.status.answer')])
+    @else
+        <a href="{{URL::previous()}}" type="button" class="btn btn-outline-secondary">Назад</a>
+    @endcan
 @endsection

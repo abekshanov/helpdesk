@@ -1,8 +1,4 @@
 <div  class="orderForm">
-    {{--Вывод ошибок --}}
-    <ul class=" alert alert-danger validationErrors"  style="display: none">
-    </ul>
-
     <form method="post" enctype="multipart/form-data" action="{{route('orders.store')}}">
         {{ csrf_field()}}
         <input type="text" name="title" class="form-control mt-2" id="" placeholder="Тема">
