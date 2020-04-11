@@ -29,8 +29,8 @@ class UpdateOrdersTable extends Migration
     public function down()
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropForeign('author_id');
-            $table->dropForeign('assignee_id');
+            $table->dropForeign(['author_id']);
+            $table->dropForeign(['assignee_id']);
         });
     }
 }

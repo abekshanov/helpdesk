@@ -7,6 +7,8 @@ return [
         'role' => 'client',
     ],
 
+    'initManagerEmail' => 'example@example.com',
+
     'status' => [
         'open' => 'open',
         'closed' => 'closed',
@@ -17,4 +19,7 @@ return [
         'client' => 'client',
         'manager' => 'manager',
     ],
+
+
+
 ];
