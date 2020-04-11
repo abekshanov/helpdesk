@@ -45,7 +45,7 @@ class OrderPolicy
     }
 
     /**
-     * Determine whether the user can create orders.
+     * Determine whether the user can answer orders when status is open.
      *
      * @param  \App\User  $user
      * @return mixed
@@ -53,6 +53,11 @@ class OrderPolicy
     public function answer(User $user, Order $order)
     {
         if (!OrderService::isOpen($order->id)) {
+            return false;
+        }
+
+        if((!$order->assignee_id) && ($user->hasRole(config('helpdesk.roles.manager'))))
+        {
             return false;
         }
         return true;

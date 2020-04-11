@@ -4,6 +4,7 @@
     <p><b>Номер заявки: </b> {{$order->id}}</p>
     <p><b>Тема:</b> {{$order->title}}</p>
     <p><b>Сообщение: </b>{{$order->description}}</p>
+    <p><b>Автор: </b>{{\App\User::find($order->author_id)->name}}</p>
     <p>
         <b>Влолжение: </b>
         @if (isset($order->file_link))
@@ -40,6 +41,7 @@
             @foreach ($answers as $answer)
                 <i>Тема: {{$answer->title}}</i><br>
                 <i>Сообщение: {{$answer->description}}</i><br>
+                <i>Автор: {{\App\User::find($answer->author_id)->name}}</i><br>
                 <i>Влолжение: </i>
                 @if (isset($answer->file_link))
                     <a href="{{$answer->file_link}}"  target="_blank"  type="button"

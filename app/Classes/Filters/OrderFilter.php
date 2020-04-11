@@ -6,6 +6,8 @@ namespace App\Classes\Filters;
 
 use App\Order;
 use App\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class OrderFilter extends QueryFilter
 {
@@ -36,27 +38,25 @@ class OrderFilter extends QueryFilter
 
     public function hasManagerAnswer($value)
     {
-        // массив parent_id ответов
-        $arrayAnswerParentId = Order::where('parent_id', '>', '0')->get()->pluck('parent_id');
 
         //массив содержащий id пользователей с ролью manager
         $arrayManagerId = User::whereHas('roles', function ($q){
             $q->where('name', config('helpdesk.roles.manager'));
-        })->get()->pluck('id');
+        })->get()->pluck('id')->toArray();
 
+        // массив parent_id ответов менеджеров
+        $arrayAnswerManagerParentId = Order::where('parent_id', '>', '0')
+            ->whereIn('author_id', $arrayManagerId)
+            ->get()->pluck('parent_id')->toArray();
 
         if ($value == 'answered') {
             $this->builder
-                ->whereIn('id', $arrayAnswerParentId)
-                ->whereIn('author_id', $arrayManagerId);
+                ->whereIn('id', $arrayAnswerManagerParentId)
+                ->where('assignee_id','!=', null);
         }
         elseif ($value == 'no-answered'){
             $this->builder
-                ->whereNotIn('id', $arrayAnswerParentId)
-                ->orWhere(function ($q) use($arrayAnswerParentId, $arrayManagerId){
-                    $q->whereIn('id', $arrayAnswerParentId)
-                        ->whereNotIn('author_id', $arrayManagerId);
-                });
+                ->whereNotIn('id', $arrayAnswerManagerParentId);
         }
 
     }
